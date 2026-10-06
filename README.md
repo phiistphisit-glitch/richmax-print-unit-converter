@@ -19,3 +19,10 @@ Results are theoretical and exclude cores, waste/trim and moisture.
 `node test_formulas.js` — extracts the formula block from `index.html` and checks known cases (e.g. PET 12 µm × 1000 mm × 1000 m = 16.8 kg).
 
 Demo by RICHMAX bot team.
+
+## Google Sheets sharing (team log)
+- Section 3 of the page: optional name (remembered on the device), optional note, **Save to Google Sheet** button, **Auto-send after each calculation** toggle (sends only after inputs are stable ~2 s, never repeats the last row sent), and a status pill (not connected / ready / waiting / sent / failed).
+- Backend: Google Apps Script web app bound to the sheet — see [`apps-script/Code.gs`](apps-script/Code.gs) (doPost appends a row with LockService + shared token, then a throttled MailApp notification; doGet health check). Setup guide (Thai): [`SETUP_GOOGLE_SHEET_TH.md`](SETUP_GOOGLE_SHEET_TH.md).
+- The Web App URL is the `SHEETS_WEBAPP_URL` constant near the top of `index.html` (empty = not connected). Settings → URL overrides it on one device (localStorage).
+- `SHEETS_TOKEN` is visible in this public repo — a demo-level filter, not a secret.
+- Tests: `node apps-script/test_code_gs.js` (offline mocks of SpreadsheetApp/MailApp/LockService); `tests/ui_test.js` (headless Chrome + `tests/mock_server.py` recording POSTs).

@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RICHMAX Print Unit Converter</title>
 <meta name="description" content="Printing-industry unit converter for gravure film rolls and offset paper sheets: meters, feet, kg, m², sheets, reams.">
+<script>
+/* ===== Google Sheets sharing config =====
+   Paste the boss's Apps Script Web App URL here (one-line commit). Empty = "not connected yet".
+   A URL saved in the in-app Settings (localStorage) overrides this value. */
+const SHEETS_WEBAPP_URL = "";
+/* Demo-level shared token. The repo is PUBLIC, so this is NOT a real secret. Must match SHARED_TOKEN in apps-script/Code.gs. */
+const SHEETS_TOKEN = "richmax-demo-2026";
+</script>
 <style>
 :root{
   --bg:#0f172a;--panel:#ffffff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;
@@ -54,6 +62,23 @@ input[readonly]{background:#f1f5f9;color:#334155}
 .chk input{width:auto}
 [hidden]{display:none!important}
 @media (max-width:480px){.tabs{width:100%}.tab{flex:1;padding:9px 8px;font-size:13px}}
+.save{margin-top:16px}
+.save .row3{display:grid;grid-template-columns:1fr 1.4fr auto;gap:10px;align-items:end}
+@media (max-width:760px){.save .row3{grid-template-columns:1fr}}
+.btn{border:0;border-radius:10px;padding:11px 18px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--brand),var(--brand2));white-space:nowrap}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid #cbd5e1;font-weight:600;font-size:13px;padding:8px 12px}
+.save-bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-top:12px}
+.switch{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer}
+.switch input{width:auto;accent-color:var(--brand2);transform:scale(1.15)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:999px;background:#f1f5f9;color:#475569}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.pill.ok{background:#ecfdf5;color:#047857}.pill.err{background:#fef2f2;color:#b91c1c}.pill.wait{background:#eff6ff;color:#1d4ed8}.pill.off{background:#f1f5f9;color:#64748b}
+.preview{font-size:12.5px;color:#334155;background:var(--soft);border:1px dashed #cbd5e1;border-radius:10px;padding:8px 10px;margin-top:10px;word-break:break-word}
+details.settings{margin-top:12px;font-size:13px}
+details.settings summary{cursor:pointer;color:var(--muted);font-weight:600}
+details.settings .field{margin-top:10px}
+.mini{font-size:12px;color:var(--muted);margin-top:6px}
 footer{color:#cbd5e1;text-align:center;font-size:13px;margin-top:22px}
 footer a{color:#fff}
 </style>
@@ -165,6 +190,30 @@ footer a{color:#fff}
       <div class="stat"><b id="ps-spk">–</b><span>Sheets per kg · แผ่นต่อกิโลกรัม</span></div>
     </div>
     <p class="note">⚠️ Theoretical values only — exclude cores, waste/trim and moisture. ค่าทางทฤษฎี ไม่รวมแกน ของเสีย และความชื้น</p>
+  </section>
+
+  <!-- GOOGLE SHEETS SAVE -->
+  <section class="card save" id="save" aria-label="Save to Google Sheet">
+    <p class="section-title">3 · Save to Google Sheet <span>บันทึกลง Google Sheet ของทีม</span></p>
+    <div class="row3">
+      <div class="field"><label for="s-user">Your name <small>ชื่อผู้บันทึก (ไม่บังคับ)</small></label><input id="s-user" maxlength="60" placeholder="e.g. Nid / นิด"></div>
+      <div class="field"><label for="s-note">Note <small>หมายเหตุ (ไม่บังคับ)</small></label><input id="s-note" maxlength="300" placeholder="Job no., customer… · เลขงาน ลูกค้า"></div>
+      <div class="field"><button class="btn" id="s-save" type="button">Save to Google Sheet · บันทึก</button></div>
+    </div>
+    <div class="preview" id="s-preview">–</div>
+    <div class="save-bar">
+      <label class="switch"><input type="checkbox" id="s-auto"> Auto-send after each calculation <small style="color:var(--muted);font-weight:500">ส่งอัตโนมัติหลังคำนวณ (รอ 2 วินาที)</small></label>
+      <span class="pill off" id="s-status" role="status" aria-live="polite">Not connected yet · ยังไม่ได้เชื่อมต่อ</span>
+    </div>
+    <details class="settings" id="s-settings">
+      <summary>Settings · ตั้งค่าการเชื่อมต่อ</summary>
+      <div class="field">
+        <label for="s-url">Google Apps Script Web App URL <small>ลิงก์เว็บแอป (เก็บไว้ในเครื่องนี้เท่านั้น)</small></label>
+        <input id="s-url" inputmode="url" placeholder="https://script.google.com/macros/s/…/exec">
+      </div>
+      <button class="btn ghost" id="s-url-clear" type="button">Use built-in URL · ใช้ค่าเริ่มต้น</button>
+      <p class="mini" id="s-url-src"></p>
+    </details>
   </section>
 
   <footer>Demo by RICHMAX bot team · RICHMAX INTERPRINT, Bangkok</footer>
@@ -315,6 +364,127 @@ pS.addEventListener("change", () => { applySize(); paperRecalc(); });
 
 applySize(); filmRecalc(); paperRecalc();
 if (location.hash === "#paper") $("tab-paper").click();
+</script>
+<script>
+/* ===== Google Sheets sharing (added around the converter; formulas above are unchanged) ===== */
+(function(){
+  const LS = { user:"rpuc.user", url:"rpuc.webAppUrl", auto:"rpuc.autoSend" };
+  const AUTO_DELAY_MS = 2000;
+  const ls = {
+    get(k){ try { return localStorage.getItem(k) || ""; } catch(e){ return ""; } },
+    set(k,v){ try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch(e){} }
+  };
+  const el = id => document.getElementById(id);
+  const r = (v, dp) => isFinite(v) ? +(+v).toFixed(dp) : "";
+  const bkkNow = () => new Intl.DateTimeFormat("sv-SE", {timeZone:"Asia/Bangkok", year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false}).format(new Date());
+  const selText = sel => sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
+  const activeTab = () => el("film").hidden ? "paper" : "film";
+  function webAppUrl(){ return (ls.get(LS.url) || SHEETS_WEBAPP_URL || "").trim(); }
+
+  // Build one row from the current state of the active tab, reusing the existing formula functions.
+  function buildRow(){
+    if (activeTab() === "film"){
+      const direct = el("f-directgsm").checked;
+      const density = num(el("f-density").value), thick = num(el("f-thick").value);
+      const gsm = direct ? num(el("f-gsm").value) : filmGsm(thick, density);
+      const w = num(el("f-width").value), v = num(el("f-" + fKey).value);
+      if (!(gsm > 0 && w > 0 && isFinite(v) && v > 0)) return null;
+      const x = filmSolve(fKey, v, w, gsm);
+      return { tab:"Film roll / ฟิล์มม้วน", preset: fPreset.value === "custom" ? "Custom" : selText(fPreset),
+        density: direct ? "" : r(density,3), thickness: direct ? "" : r(thick,2), gsm: r(gsm,3), widthMm: r(w,1),
+        sheetSize:"", sheetWmm:"", sheetHmm:"",
+        m: r(x.m,3), ft: r(x.ft,2), kg: r(x.kg,4), m2: r(x.m2,3), sheets:"", reams:"" };
+    }
+    const custom = pG.value === "custom";
+    const gsm = custom ? num(el("p-gsm").value) : num(pG.value);
+    const w = num(el("p-w").value), h = num(el("p-h").value), v = num(el("p-" + pKey).value);
+    if (!(gsm > 0 && w > 0 && h > 0 && isFinite(v) && v > 0)) return null;
+    const x = paperSolve(pKey, v, w, h, gsm);
+    return { tab:"Sheet paper / กระดาษแผ่น", preset: custom ? "Custom GSM" : selText(pG),
+      density:"", thickness:"", gsm: r(gsm,2), widthMm:"",
+      sheetSize: pS.value === "custom" ? "Custom" : selText(pS), sheetWmm: r(w,1), sheetHmm: r(h,1),
+      m:"", ft:"", kg: r(x.kg,4), m2: r(x.m2,3), sheets: r(x.sheets,2), reams: r(x.reams,4) };
+  }
+  const sig = row => row ? JSON.stringify(row) : "";
+  function previewText(row){
+    if (!row) return "Nothing to save yet — enter a quantity · ยังไม่มีค่าให้บันทึก";
+    return row.tab.startsWith("Film")
+      ? `${row.tab} · ${row.preset} · GSM ${row.gsm} · ${row.widthMm} mm → ${fmt(row.m)} m = ${fmt(row.ft)} ft = ${fmt(row.kg)} kg = ${fmt(row.m2)} m²`
+      : `${row.tab} · ${row.preset} · ${row.sheetSize} → ${fmt(row.sheets,2)} sheets = ${fmt(row.kg)} kg = ${fmt(row.reams)} reams = ${fmt(row.m2)} m²`;
+  }
+
+  // Status pill
+  const st = el("s-status");
+  function status(kind, text){ st.className = "pill " + kind; st.textContent = text; }
+  function idleStatus(){ webAppUrl() ? status("off", "Ready · พร้อมส่ง") : status("off", "Not connected yet · ยังไม่ได้เชื่อมต่อ"); }
+
+  let lastSentSig = "", timer = null, sending = false;
+  async function send(mode){
+    const row = buildRow(), url = webAppUrl();
+    if (!url){ status("off", "Not connected yet · ยังไม่ได้เชื่อมต่อ"); return "not-connected"; }
+    if (!row){ status("err", "Nothing to save · ไม่มีค่าให้บันทึก"); return "empty"; }
+    const s = sig(row);
+    if (mode === "auto" && s === lastSentSig){ idleStatus(); return "duplicate"; }
+    const payload = Object.assign({ token: SHEETS_TOKEN, clientTs: bkkNow(), user: el("s-user").value.trim(), note: el("s-note").value.trim(), mode }, row);
+    status("wait", "Sending… · กำลังส่ง");
+    sending = true;
+    try {
+      // Standard Apps Script pattern: simple request (text/plain) + no-cors, response is opaque.
+      await fetch(url, { method:"POST", mode:"no-cors", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+      lastSentSig = s;
+      status("ok", `Sent ${payload.clientTs.slice(11)} · ส่งแล้ว` + (mode === "auto" ? " (auto)" : ""));
+      return "sent";
+    } catch (e){
+      status("err", "Failed — check connection · ส่งไม่สำเร็จ");
+      return "failed";
+    } finally { sending = false; }
+  }
+
+  function refreshPreview(){
+    const row = buildRow();
+    el("s-preview").textContent = previewText(row);
+    el("s-save").disabled = !row;
+  }
+  function scheduleAuto(){
+    clearTimeout(timer); timer = null;
+    if (!el("s-auto").checked) return;
+    if (!webAppUrl()){ idleStatus(); return; }
+    const row = buildRow();
+    if (!row || sig(row) === lastSentSig){ return; }
+    status("wait", "Auto-send in 2 s… · จะส่งใน 2 วินาที");
+    timer = setTimeout(() => { timer = null; send("auto"); }, AUTO_DELAY_MS);
+  }
+  // Delegated listeners run after the converter's own handlers have recalculated.
+  ["input","change"].forEach(ev => {
+    el("film").addEventListener(ev, () => setTimeout(() => { refreshPreview(); scheduleAuto(); }, 0));
+    el("paper").addEventListener(ev, () => setTimeout(() => { refreshPreview(); scheduleAuto(); }, 0));
+  });
+  ["tab-film","tab-paper"].forEach(id => el(id).addEventListener("click", () => setTimeout(() => { clearTimeout(timer); timer = null; refreshPreview(); if (st.classList.contains("wait")) idleStatus(); }, 0)));
+
+  // Name (remembered), note, buttons, toggle, settings
+  el("s-user").value = ls.get(LS.user);
+  el("s-user").addEventListener("input", () => ls.set(LS.user, el("s-user").value.trim()));
+  el("s-save").addEventListener("click", () => { clearTimeout(timer); timer = null; send("manual"); });
+  el("s-auto").checked = ls.get(LS.auto) === "1";
+  el("s-auto").addEventListener("change", () => {
+    ls.set(LS.auto, el("s-auto").checked ? "1" : "");
+    if (el("s-auto").checked) scheduleAuto(); else { clearTimeout(timer); timer = null; idleStatus(); }
+  });
+  function urlSrc(){
+    el("s-url-src").textContent = ls.get(LS.url) ? "Using the URL saved on this device · ใช้ลิงก์ที่บันทึกในเครื่องนี้"
+      : SHEETS_WEBAPP_URL ? "Using the built-in team URL · ใช้ลิงก์ของทีม" : "No URL yet — saving is off · ยังไม่มีลิงก์ จึงยังบันทึกไม่ได้";
+  }
+  el("s-url").value = ls.get(LS.url);
+  el("s-url").addEventListener("input", () => {
+    const v = el("s-url").value.trim();
+    ls.set(LS.url, /^https?:\/\//i.test(v) ? v : "");
+    urlSrc(); idleStatus();
+  });
+  el("s-url-clear").addEventListener("click", () => { el("s-url").value = ""; ls.set(LS.url, ""); urlSrc(); idleStatus(); });
+
+  urlSrc(); idleStatus(); refreshPreview();
+  window.__rpucSheets = { buildRow, send, webAppUrl }; // for testing
+})();
 </script>
 </body>
 </html>

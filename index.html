@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RICHMAX Print Unit Converter</title>
+<meta name="description" content="Printing-industry unit converter for gravure film rolls and offset paper sheets: meters, feet, kg, m², sheets, reams.">
+<style>
+:root{
+  --bg:#0f172a;--panel:#ffffff;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;
+  --brand:#e11d48;--brand2:#7c3aed;--soft:#f8fafc;--accent:#fff1f2;--ok:#0f766e;
+  --radius:14px;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Thai","Sarabun","Leelawadee UI","Tahoma",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#0f172a 0%,#1e1b4b 55%,#3b0764 100%);min-height:100vh;color:var(--ink)}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 40px}
+header{color:#fff;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;font-weight:800;font-size:20px;box-shadow:0 6px 20px rgba(225,29,72,.35)}
+h1{margin:0;font-size:clamp(22px,4vw,30px);letter-spacing:-.02em}
+.sub{margin:4px 0 0;color:#cbd5e1;font-size:14px}
+.tabs{display:flex;gap:8px;margin:20px 0 14px;background:rgba(255,255,255,.08);padding:6px;border-radius:999px;width:max-content;max-width:100%}
+.tab{border:0;background:transparent;color:#e2e8f0;padding:10px 18px;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;font-size:14px}
+.tab[aria-selected="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.card{background:var(--panel);border-radius:var(--radius);padding:20px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:0 0 10px}
+.section-title span{text-transform:none;letter-spacing:0;font-weight:500}
+.box{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px}
+label{display:block;font-size:13px;font-weight:600;margin:0 0 5px}
+label small{color:var(--muted);font-weight:500}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit;font-size:15px;background:#fff;color:var(--ink);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus{outline:none;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(124,58,237,.18)}
+input[readonly]{background:#f1f5f9;color:#334155}
+.unit{position:relative}
+.unit input{padding-right:58px}
+.unit em{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-style:normal;color:var(--muted);font-size:13px;pointer-events:none}
+.qty .field input{font-size:18px;font-weight:700}
+.qty .field.driver input{border-color:var(--brand);background:var(--accent)}
+.hint{font-size:12px;color:var(--muted);margin-top:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr}}
+.stat{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.stat b{display:block;font-size:20px;letter-spacing:-.01em}
+.stat span{font-size:12px;color:var(--muted)}
+.stat.hl{background:linear-gradient(135deg,#fff1f2,#f5f3ff);border-color:#fecdd3}
+.note{margin-top:16px;font-size:12.5px;color:#7c2d12;background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin:4px 0 12px}
+.chk input{width:auto}
+[hidden]{display:none!important}
+@media (max-width:480px){.tabs{width:100%}.tab{flex:1;padding:9px 8px;font-size:13px}}
+footer{color:#cbd5e1;text-align:center;font-size:13px;margin-top:22px}
+footer a{color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">R</div>
+      <div>
+        <h1>RICHMAX Print Unit Converter</h1>
+        <p class="sub">ตัวแปลงหน่วยงานพิมพ์ · Gravure film rolls &amp; offset paper sheets</p>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tab-film" aria-selected="true" aria-controls="film">Film rolls · ฟิล์มม้วน</button>
+      <button class="tab" role="tab" id="tab-paper" aria-selected="false" aria-controls="paper">Paper sheets · กระดาษแผ่น</button>
+    </div>
+  </header>
+
+  <!-- FILM MODE -->
+  <section class="card" id="film" role="tabpanel" aria-labelledby="tab-film">
+    <div class="grid">
+      <div>
+        <p class="section-title">1 · Material <span>วัสดุ</span></p>
+        <div class="box">
+          <div class="field">
+            <label for="f-preset">Material preset <small>วัสดุสำเร็จรูป</small></label>
+            <select id="f-preset"></select>
+          </div>
+          <label class="chk"><input type="checkbox" id="f-directgsm"> Enter GSM directly <small style="color:var(--muted);font-weight:500">กรอก GSM เอง</small></label>
+          <div class="row2" id="f-dt">
+            <div class="field">
+              <label for="f-density">Density <small>ความหนาแน่น</small></label>
+              <div class="unit"><input id="f-density" inputmode="decimal" value="1.40"><em>g/cm³</em></div>
+            </div>
+            <div class="field">
+              <label for="f-thick">Thickness <small>ความหนา</small></label>
+              <div class="unit"><input id="f-thick" inputmode="decimal" value="12"><em>µm</em></div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-gsm">GSM <small>น้ำหนักต่อตารางเมตร</small></label>
+            <div class="unit"><input id="f-gsm" inputmode="decimal" readonly><em>g/m²</em></div>
+          </div>
+          <div class="field">
+            <label for="f-width">Web width <small>หน้ากว้างฟิล์ม</small></label>
+            <div class="unit"><input id="f-width" inputmode="decimal" value="1000"><em>mm</em></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="section-title">2 · Quantity <span>ปริมาณ — type in any box · พิมพ์ช่องใดก็ได้</span></p>
+        <div class="box qty">
+          <div class="field" data-k="m"><label for="f-m">Length <small>ความยาว (เมตร)</small></label><div class="unit"><input id="f-m" inputmode="decimal" value="1000"><em>m</em></div></div>
+          <div class="field" data-k="ft"><label for="f-ft">Length <small>ความยาว (ฟุต)</small></label><div class="unit"><input id="f-ft" inputmode="decimal"><em>ft</em></div></div>
+          <div class="field" data-k="kg"><label for="f-kg">Weight <small>น้ำหนัก</small></label><div class="unit"><input id="f-kg" inputmode="decimal"><em>kg</em></div></div>
+          <div class="field" data-k="m2"><label for="f-m2">Area <small>พื้นที่</small></label><div class="unit"><input id="f-m2" inputmode="decimal"><em>m²</em></div></div>
+          <p class="hint">Highlighted box = your input; the others are calculated. ช่องที่ไฮไลต์คือค่าที่กรอก</p>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat hl"><b id="fs-mpkg">–</b><span>Linear m per kg · เมตรต่อกิโลกรัม</span></div>
+      <div class="stat"><b id="fs-gpm">–</b><span>g per linear m · กรัมต่อเมตร</span></div>
+      <div class="stat"><b id="fs-m2kg">–</b><span>m² per kg · ตร.ม. ต่อกิโลกรัม</span></div>
+    </div>
+    <p class="note">⚠️ Theoretical values only — exclude cores, waste/trim and moisture. ค่าทางทฤษฎี ไม่รวมแกน ของเสีย และความชื้น</p>
+  </section>
+
+  <!-- PAPER MODE -->
+  <section class="card" id="paper" role="tabpanel" aria-labelledby="tab-paper" hidden>
+    <div class="grid">
+      <div>
+        <p class="section-title">1 · Stock <span>กระดาษ</span></p>
+        <div class="box">
+          <div class="field">
+            <label for="p-gsmpreset">Paper / board GSM <small>แกรมกระดาษ</small></label>
+            <select id="p-gsmpreset"></select>
+          </div>
+          <div class="field" id="p-gsmwrap" hidden>
+            <label for="p-gsm">Custom GSM <small>แกรมกำหนดเอง</small></label>
+            <div class="unit"><input id="p-gsm" inputmode="decimal" value="300"><em>g/m²</em></div>
+          </div>
+          <div class="field">
+            <label for="p-size">Sheet size <small>ขนาดแผ่น</small></label>
+            <select id="p-size"></select>
+          </div>
+          <div class="row2">
+            <div class="field"><label for="p-w">Width <small>กว้าง</small></label><div class="unit"><input id="p-w" inputmode="decimal"><em>mm</em></div></div>
+            <div class="field"><label for="p-h">Length <small>ยาว</small></label><div class="unit"><input id="p-h" inputmode="decimal"><em>mm</em></div></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <p class="section-title">2 · Quantity <span>ปริมาณ — type in any box · พิมพ์ช่องใดก็ได้</span></p>
+        <div class="box qty">
+          <div class="field" data-k="sheets"><label for="p-sheets">Sheets <small>จำนวนแผ่น</small></label><div class="unit"><input id="p-sheets" inputmode="decimal" value="10000"><em>sheets</em></div></div>
+          <div class="field" data-k="kg"><label for="p-kg">Weight <small>น้ำหนัก</small></label><div class="unit"><input id="p-kg" inputmode="decimal"><em>kg</em></div></div>
+          <div class="field" data-k="reams"><label for="p-reams">Reams (500 sh) <small>รีม</small></label><div class="unit"><input id="p-reams" inputmode="decimal"><em>reams</em></div></div>
+          <div class="field" data-k="m2"><label for="p-m2">Area <small>พื้นที่</small></label><div class="unit"><input id="p-m2" inputmode="decimal"><em>m²</em></div></div>
+          <p class="hint">Highlighted box = your input; the others are calculated. ช่องที่ไฮไลต์คือค่าที่กรอก</p>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat hl"><b id="ps-gps">–</b><span>g per sheet · กรัมต่อแผ่น</span></div>
+      <div class="stat"><b id="ps-kgr">–</b><span>kg per ream · กก. ต่อรีม</span></div>
+      <div class="stat"><b id="ps-spk">–</b><span>Sheets per kg · แผ่นต่อกิโลกรัม</span></div>
+    </div>
+    <p class="note">⚠️ Theoretical values only — exclude cores, waste/trim and moisture. ค่าทางทฤษฎี ไม่รวมแกน ของเสีย และความชื้น</p>
+  </section>
+
+  <footer>Demo by RICHMAX bot team · RICHMAX INTERPRINT, Bangkok</footer>
+</div>
+
+<script>
+/*CALC-START*/
+const MM_PER_IN = 25.4, M_PER_FT = 0.3048, REAM = 500;
+const FILMS = [
+  {id:"pet",  name:"PET",          density:1.40, thick:12},
+  {id:"bopp", name:"BOPP",         density:0.91, thick:20},
+  {id:"cpp",  name:"CPP",          density:0.90, thick:70},
+  {id:"lldpe",name:"LLDPE",        density:0.92, thick:40},
+  {id:"pa",   name:"Nylon / PA",   density:1.14, thick:15},
+  {id:"al",   name:"AL foil",      density:2.70, thick:7},
+  {id:"pvc",  name:"PVC shrink",   density:1.30, thick:40}
+];
+const PAPER_GSM = [
+  {gsm:80,  name:"80 g/m²"},
+  {gsm:120, name:"120 g/m²"},
+  {gsm:210, name:"210 g/m²"},
+  {gsm:230, name:"230 g/m²"},
+  {gsm:250, name:"250 g/m²"},
+  {gsm:300, name:"300 g/m² — Art card · อาร์ตการ์ด"},
+  {gsm:350, name:"350 g/m² — Grey-back board · กล่องแป้งหลังเทา"}
+];
+const SHEETS = [
+  {id:"31x43", name:'31 × 43 in', w:31*MM_PER_IN, h:43*MM_PER_IN},
+  {id:"24x35", name:'24 × 35 in', w:24*MM_PER_IN, h:35*MM_PER_IN},
+  {id:"25x36", name:'25 × 36 in', w:25*MM_PER_IN, h:36*MM_PER_IN},
+  {id:"28x40", name:'28 × 40 in', w:28*MM_PER_IN, h:40*MM_PER_IN},
+  {id:"a1",    name:'A1 594 × 841 mm', w:594, h:841}
+];
+// Film: GSM = thickness(µm) × density(g/cm³)
+function filmGsm(thickUm, density){ return thickUm * density; }
+// Film: given one of {m, ft, kg, m2} plus width(mm) and GSM -> all
+function filmSolve(key, value, widthMm, gsm){
+  const wm = widthMm / 1000;
+  let m;
+  if (key === "m") m = value;
+  else if (key === "ft") m = value * M_PER_FT;
+  else if (key === "m2") m = value / wm;
+  else if (key === "kg") m = (value * 1000 / gsm) / wm;
+  const m2 = m * wm;
+  const kg = m2 * gsm / 1000;
+  return { m, ft: m / M_PER_FT, m2, kg,
+           mPerKg: 1000 / (gsm * wm), gPerM: gsm * wm, m2PerKg: 1000 / gsm };
+}
+// Paper: kg = sheets × sheet_area_m2 × GSM / 1000
+function paperSolve(key, value, wMm, hMm, gsm){
+  const a = (wMm / 1000) * (hMm / 1000);
+  let sheets;
+  if (key === "sheets") sheets = value;
+  else if (key === "reams") sheets = value * REAM;
+  else if (key === "m2") sheets = value / a;
+  else if (key === "kg") sheets = (value * 1000) / (a * gsm);
+  return { sheets, reams: sheets / REAM, m2: sheets * a, kg: sheets * a * gsm / 1000,
+           sheetM2: a, gPerSheet: a * gsm, kgPerReam: a * gsm * REAM / 1000, sheetsPerKg: 1000 / (a * gsm) };
+}
+/*CALC-END*/
+
+const $ = id => document.getElementById(id);
+const num = s => { const v = parseFloat(String(s).replace(/,/g, "")); return isFinite(v) ? v : NaN; };
+function fmt(v, maxDp){
+  if (!isFinite(v)) return "";
+  const a = Math.abs(v);
+  const dp = maxDp ?? (a >= 1000 ? 1 : a >= 100 ? 2 : a >= 1 ? 3 : 4);
+  return v.toLocaleString("en-US", {maximumFractionDigits: dp});
+}
+function setDriver(boxSel, key){
+  document.querySelectorAll(boxSel + " .qty .field").forEach(f => f.classList.toggle("driver", f.dataset.k === key));
+}
+
+/* ---------- Tabs ---------- */
+["film","paper"].forEach(t => $("tab-" + t).addEventListener("click", () => {
+  ["film","paper"].forEach(u => { $("tab-" + u).setAttribute("aria-selected", u === t); $(u).hidden = u !== t; });
+}));
+
+/* ---------- Film ---------- */
+const fPreset = $("f-preset");
+FILMS.forEach(f => fPreset.add(new Option(`${f.name} — ${f.thick} µm · ${f.density.toFixed(2)} g/cm³`, f.id)));
+fPreset.add(new Option("Custom · กำหนดเอง", "custom"));
+let fKey = "m";
+function filmRecalc(){
+  const direct = $("f-directgsm").checked;
+  $("f-gsm").readOnly = !direct;
+  $("f-dt").style.opacity = direct ? .45 : 1;
+  let gsm;
+  if (direct) gsm = num($("f-gsm").value);
+  else { gsm = filmGsm(num($("f-thick").value), num($("f-density").value)); $("f-gsm").value = fmt(gsm, 3); }
+  const w = num($("f-width").value);
+  const v = num($("f-" + fKey).value);
+  setDriver("#film", fKey);
+  const ok = gsm > 0 && w > 0;
+  if (!ok || !isFinite(v)) {
+    ["m","ft","kg","m2"].filter(k => k !== fKey).forEach(k => $("f-" + k).value = "");
+    if (ok) { const r = filmSolve("m", 1, w, gsm); $("fs-mpkg").textContent = fmt(r.mPerKg, 2) + " m"; $("fs-gpm").textContent = fmt(r.gPerM, 2) + " g"; $("fs-m2kg").textContent = fmt(r.m2PerKg, 2) + " m²"; }
+    else ["fs-mpkg","fs-gpm","fs-m2kg"].forEach(i => $(i).textContent = "–");
+    return;
+  }
+  const r = filmSolve(fKey, v, w, gsm);
+  ["m","ft","kg","m2"].filter(k => k !== fKey).forEach(k => $("f-" + k).value = fmt(r[k]));
+  $("fs-mpkg").textContent = fmt(r.mPerKg, 2) + " m";
+  $("fs-gpm").textContent = fmt(r.gPerM, 2) + " g";
+  $("fs-m2kg").textContent = fmt(r.m2PerKg, 2) + " m²";
+}
+fPreset.addEventListener("change", () => {
+  const f = FILMS.find(x => x.id === fPreset.value);
+  if (f) { $("f-density").value = f.density.toFixed(2); $("f-thick").value = f.thick; $("f-directgsm").checked = false; }
+  filmRecalc();
+});
+["f-density","f-thick"].forEach(id => $(id).addEventListener("input", () => { fPreset.value = "custom"; filmRecalc(); }));
+$("f-gsm").addEventListener("input", () => { fPreset.value = "custom"; filmRecalc(); });
+$("f-width").addEventListener("input", filmRecalc);
+$("f-directgsm").addEventListener("change", filmRecalc);
+["m","ft","kg","m2"].forEach(k => $("f-" + k).addEventListener("input", () => { fKey = k; filmRecalc(); }));
+
+/* ---------- Paper ---------- */
+const pG = $("p-gsmpreset"), pS = $("p-size");
+PAPER_GSM.forEach(p => pG.add(new Option(p.name, p.gsm)));
+pG.add(new Option("Custom GSM · กำหนดเอง", "custom"));
+pG.value = "300";
+SHEETS.forEach(s => pS.add(new Option(s.name + (s.id === "a1" ? "" : ` (${fmt(s.w,1)} × ${fmt(s.h,1)} mm)`), s.id)));
+pS.add(new Option("Custom mm · กำหนดเอง", "custom"));
+pS.value = "31x43";
+let pKey = "sheets";
+function applySize(){ const s = SHEETS.find(x => x.id === pS.value); if (s) { $("p-w").value = +s.w.toFixed(1); $("p-h").value = +s.h.toFixed(1); } }
+function paperRecalc(){
+  const custom = pG.value === "custom";
+  $("p-gsmwrap").hidden = !custom;
+  const gsm = custom ? num($("p-gsm").value) : num(pG.value);
+  const w = num($("p-w").value), h = num($("p-h").value);
+  const v = num($("p-" + pKey).value);
+  setDriver("#paper", pKey);
+  const keys = ["sheets","kg","reams","m2"].filter(k => k !== pKey);
+  if (!(gsm > 0 && w > 0 && h > 0)) { keys.forEach(k => $("p-" + k).value = ""); ["ps-gps","ps-kgr","ps-spk"].forEach(i => $(i).textContent = "–"); return; }
+  const r = paperSolve(pKey, isFinite(v) ? v : 0, w, h, gsm);
+  keys.forEach(k => $("p-" + k).value = isFinite(v) ? fmt(r[k], k === "sheets" ? 0 : undefined) : "");
+  $("ps-gps").textContent = fmt(r.gPerSheet, 2) + " g";
+  $("ps-kgr").textContent = fmt(r.kgPerReam, 2) + " kg";
+  $("ps-spk").textContent = fmt(r.sheetsPerKg, 2);
+}
+pG.addEventListener("change", paperRecalc);
+$("p-gsm").addEventListener("input", paperRecalc);
+pS.addEventListener("change", () => { applySize(); paperRecalc(); });
+["p-w","p-h"].forEach(id => $(id).addEventListener("input", () => { pS.value = "custom"; paperRecalc(); }));
+["sheets","kg","reams","m2"].forEach(k => $("p-" + k).addEventListener("input", () => { pKey = k; paperRecalc(); }));
+
+applySize(); filmRecalc(); paperRecalc();
+if (location.hash === "#paper") $("tab-paper").click();
+</script>
+</body>
+</html>
